@@ -52,6 +52,7 @@ Resultados vão para `runs/<experimento>/<tarefa>/fold<k>/` (checkpoint, métric
 | [06_ANALISE_DISSERTACAO.md](docs/06_ANALISE_DISSERTACAO.md) | texto da dissertação × código |
 | [07_PLANO_DE_ACAO.md](docs/07_PLANO_DE_ACAO.md) | **sprints até dezembro** |
 | [08_DIARIO_EXPERIMENTOS.md](docs/08_DIARIO_EXPERIMENTOS.md) | registro de cada experimento |
+| [09_TRABALHOS_RELACIONADOS.md](docs/09_TRABALHOS_RELACIONADOS.md) | candidatos para o Cap. 2 (a validar) |
 
 ## Interface
 

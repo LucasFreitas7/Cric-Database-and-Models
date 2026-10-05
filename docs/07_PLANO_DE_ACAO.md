@@ -31,15 +31,16 @@ Ritmo semanal sugerido: **segunda**, a gente escolhe as tarefas da semana neste 
 - [x] ✅ Split **por imagem**: teste com 81 imagens + 5 folds (`data/splits/splits_seed42.csv`)
 - [x] ✅ Bug dos rótulos invertidos da interface corrigido (A1–A3)
 - [ ] 🤖 Rodar o **baseline_v1** (EfficientNet-B0, 70 px): C1–C5 + flat7 + avaliação hierárquica *(em execução)*
-- [ ] 🤖 **Experimento do vazamento**: mesmo modelo com split por recorte + aumento offline (protocolo antigo) × split por imagem. Mostra o quanto os números antigos estavam inflados — vira uma tabela/argumento forte na dissertação.
+- [ ] 🤖 *(código pronto: `configs/leakage_v1.yaml`, roda após o baseline)* **Experimento do vazamento**: mesmo modelo com split por recorte + aumento offline (protocolo antigo) × split por imagem. Mostra o quanto os números antigos estavam inflados — vira uma tabela/argumento forte na dissertação.
 - [ ] 🤖 Gerador do C1 documentado (agora é o `build_cache` + jitter de 25 px = regra da fronteira de 10 px)
 
 **Texto** (correções rápidas — ver [06](06_ANALISE_DISSERTACAO.md))
-- [ ] 🤖 Capa/metadados de mestrado (T1) — 👤 passar nome do programa, banca e data
-- [ ] 🤖 Erros factuais: colunas trocadas (T2), "sexto classificador" (T3), NILM como anormal (T4), 6×7 classes (T5), objetivo 3 (T6)
-- [ ] 🤖 LaTeX: `\texit`, labels, `\cite{unknown}`, `.bib` duplicado (L1–L5)
+- [x] ✅ Capa/metadados de mestrado (T1) — 👤 falta: banca e data da defesa
+- [x] ✅ Erros factuais: colunas trocadas (T2), "sexto classificador" (T3), NILM como anormal (T4), 6×7 classes (T5), objetivo 3 (T6) — *push feito; 👤 dar Pull no Overleaf e conferir a compilação*
+- [x] ✅ LaTeX: `\texit`, labels, `.bib` duplicado (L1, L2, L3, L5) — falta `\cite{unknown}`
 - [ ] 👤 Conferir referências da CRIC e do GLOBOCAN (L6, L7)
-- [ ] 👤 Começar a atualizar os trabalhos relacionados (T11) — 🤖 posso montar uma lista de candidatos para você validar
+- [x] ✅ 🤖 Lista de candidatos para o Cap. 2 em [09_TRABALHOS_RELACIONADOS.md](09_TRABALHOS_RELACIONADOS.md)
+- [ ] 👤 Ler e validar os candidatos (prioridade: Rezende 2021, Diniz 2021, RIVA, Bussola)
 
 **Decisões no fim da S1**
 - O baseline novo ficou muito abaixo do antigo? (Esperado: sim, principalmente C4/C5/SCC.) → a dissertação passa a discutir isso como resultado.
@@ -76,6 +77,7 @@ Cada experimento é um YAML em `configs/` (só com o que muda) e responde a **um
 - [ ] 🤖 **Avaliação no teste — uma única vez**: `python scripts/evaluate_hierarchy.py --split test`
 - [ ] 🤖 **Grad-CAM** em exemplos de cada classe (figura para a dissertação)
 - [ ] 🤖 **Imagem inteira**: mapa de calor do C1 + detecção de núcleos, com avaliação contra os pontos anotados (precisão/revocação num raio de ~20 px)
+- [ ] 🤖 **Validação externa no RIVA** (Sci. Data, dez/2025 — Papanicolau convencional, 115 pacientes, mesmas classes Bethesda): treinar na CRIC e testar no RIVA. Forte para a banca; atenção à diferença de escala entre as bases.
 - [ ] 🤖 Interface: usar os modelos novos, caixas centradas nas detecções, mostrar a classe Bethesda (C4/C5) e a probabilidade
 - [ ] 👤 Prints da interface nova para a dissertação
 
