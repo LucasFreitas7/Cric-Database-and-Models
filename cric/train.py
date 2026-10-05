@@ -37,10 +37,49 @@ def run_dir(cfg, task_name):
 
 
 def load_task_rows(cfg, task):
-    """Linhas da tarefa já com a coluna 'fold' (por imagem)."""
-    index = load_index(cfg["data"]["patch_size"])
+    """Linhas da tarefa já com a coluna 'fold'.
+
+    Padrão: fold por imagem (sem vazamento). Para reproduzir o protocolo antigo
+    (experimento do vazamento), data.offline_oversample duplica classes raras ANTES
+    da divisão e data.split_mode='patch' divide por recorte — as imagens de teste
+    continuam separadas por imagem, então o teste segue honesto.
+    """
+    dc = cfg["data"]
+    index = load_index(dc["patch_size"])
     splits = load_splits(cfg["seed"])
-    return select_task_rows(index, task).merge(splits, on="image")
+    rows = select_task_rows(index, task).merge(splits, on="image")
+    rows["copy"] = 0
+    if dc.get("offline_oversample"):
+        rows = offline_oversample(rows, dc["offline_oversample"], cfg["seed"])
+    if dc.get("split_mode", "image") == "patch":
+        rows = patch_level_folds(rows, cfg["n_folds"], cfg["seed"])
+    return rows
+
+
+def offline_oversample(rows, targets, seed):
+    """Imita gerador_scc.py / gerador_ascus.py: duplica uma classe até N exemplos
+    (fora do teste). As cópias recebem aumento aleatório no Dataset de treino."""
+    rng = np.random.default_rng(seed)
+    extra = []
+    for label, total in targets.items():
+        pool = rows[(rows["label"] == label) & (rows["fold"] != TEST)]
+        n = int(total) - len(pool)
+        if n > 0 and len(pool):
+            dup = pool.iloc[rng.integers(0, len(pool), n)].copy()
+            dup["copy"] = 1
+            extra.append(dup)
+    return pd.concat([rows, *extra], ignore_index=True) if extra else rows
+
+
+def patch_level_folds(rows, n_folds, seed):
+    """Reatribui os folds por RECORTE (protocolo antigo, com vazamento)."""
+    from sklearn.model_selection import StratifiedKFold
+    rows = rows.copy()
+    dev = rows.index[rows["fold"] != TEST]
+    skf = StratifiedKFold(n_splits=n_folds, shuffle=True, random_state=seed)
+    for k, (_, val) in enumerate(skf.split(dev, rows.loc[dev, "label"])):
+        rows.loc[dev[val], "fold"] = k
+    return rows
 
 
 def train_fold(cfg, task_name, fold, device="cuda", log=print):
@@ -115,7 +154,7 @@ def train_fold(cfg, task_name, fold, device="cuda", log=print):
                 break
 
     pd.DataFrame(history).to_csv(out / "history.csv", index=False)
-    preds = val_rows[["patch_idx", "image", "label", "target"]].reset_index(drop=True)
+    preds = val_rows[["patch_idx", "image", "label", "target", "copy"]].reset_index(drop=True)
     for i, c in enumerate(task.classes):
         preds[f"p_{c}"] = best_probs[:, i]
     preds.to_csv(out / "val_predictions.csv", index=False)
@@ -139,3 +178,28 @@ def train_task(cfg, task_name, folds=None, device="cuda", log=print):
     with open(out / "summary.json", "w", encoding="utf-8") as f:
         json.dump(summary, f, indent=2, ensure_ascii=False)
     return summary
+
+
+def evaluate_task_on_test(cfg, task_name, device="cuda", log=print):
+    """Ensemble (média das probabilidades) dos modelos dos folds nas imagens de TESTE.
+
+    Atenção: o teste deve ser usado para relatar resultados, nunca para escolher
+    configuração. Saída: runs/<exp>/<tarefa>/test_metrics.json (+ matriz de confusão).
+    """
+    from .models import load_checkpoint
+    task = get_task(task_name)
+    out = run_dir(cfg, task_name)
+    rows = load_task_rows(cfg, task)
+    rows = rows[(rows["fold"] == TEST) & (rows["copy"] == 0)].reset_index(drop=True)
+    probs = None
+    for k in range(cfg["n_folds"]):
+        model, _ = load_checkpoint(out / f"fold{k}" / "best.pt", device)
+        p = predict(model, rows, cfg["data"], jitter=task_jitter(cfg, task_name), device=device)
+        probs = p if probs is None else probs + p
+    probs /= cfg["n_folds"]
+    m = compute_metrics(rows["target"], probs, task.classes)
+    with open(out / "test_metrics.json", "w", encoding="utf-8") as f:
+        json.dump(m, f, indent=2, ensure_ascii=False)
+    plot_confusion(m["confusion_matrix"], task.classes, out / "test_confusion.png", f"{task.description} — teste")
+    log(f"[{task_name}] TESTE n={m['n']} f1_macro={m['f1_macro']:.4f} bal_acc={m['balanced_accuracy']:.4f}")
+    return m

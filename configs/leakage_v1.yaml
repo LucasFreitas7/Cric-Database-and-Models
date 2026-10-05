@@ -1,0 +1,15 @@
+# Experimento do vazamento: reproduz o PROTOCOLO ANTIGO para medir o quanto ele
+# infla a estimativa de desempenho.
+#   - divisão por recorte (não por imagem)
+#   - classes raras duplicadas ANTES da divisão (como gerador_scc.py / gerador_ascus.py)
+#   - sem balanceamento no treino (o antigo não usava)
+# As imagens de teste continuam separadas por imagem: comparar a média da validação
+# cruzada (otimista) com o teste (honesto) mostra o tamanho do vazamento.
+experiment: leakage_v1
+data:
+  split_mode: patch
+  offline_oversample:
+    SCC: 1000
+    ASC-US: 1350
+train:
+  balance: none
