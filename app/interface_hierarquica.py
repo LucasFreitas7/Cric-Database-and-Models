@@ -54,9 +54,12 @@ def process_image(image_path):
         crop = image.crop((x, y, x + CROP_SIZE, y + CROP_SIZE))
         input_tensor = transform(crop).unsqueeze(0).to(DEVICE)
 
+        # Os modelos têm 1 saída (logit); a classe "1" de cada um é a 2ª pasta em ordem
+        # alfabética no treino: C1 -> nao_celula, C2 -> sem_lesao, C3 -> baixo_grau.
         with torch.no_grad():
-            is_cell = model1(input_tensor).item() < 0.5
-            
+            p_nao_celula = torch.sigmoid(model1(input_tensor)).item()
+        is_cell = p_nao_celula < 0.5
+
         if not is_cell:
             return False, None
         
@@ -65,8 +68,9 @@ def process_image(image_path):
             grid_votes[grid_key]['total_votes'] += 1
         
         with torch.no_grad():
-            # Ajuste no limiar para detectar mais lesões
-            has_lesion = model2(input_tensor).item() > 0.45  # Limiar reduzido para detectar mais lesões
+            p_sem_lesao = torch.sigmoid(model2(input_tensor)).item()
+        # Limiar levemente a favor de lesão: P(lesão) > 0.45
+        has_lesion = (1 - p_sem_lesao) > 0.45
         
         if vote:
             # Sempre registra o voto, independentemente do resultado
@@ -74,7 +78,8 @@ def process_image(image_path):
                 grid_votes[grid_key]['lesao'] += 1
         
         with torch.no_grad():
-            is_high_grade = model3(input_tensor).item() > 0.5
+            p_baixo_grau = torch.sigmoid(model3(input_tensor)).item()
+        is_high_grade = p_baixo_grau < 0.5
             
         if vote and has_lesion:
             if is_high_grade:

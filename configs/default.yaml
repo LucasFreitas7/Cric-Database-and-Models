@@ -1,0 +1,31 @@
+# Configuração padrão. Experimentos novos: criar configs/<nome>.yaml só com o que muda
+# e rodar com --config configs/<nome>.yaml (ou sobrescrever na linha: --set train.lr=1e-4)
+
+experiment: baseline_v1   # nome da pasta em runs/
+seed: 42                  # também define qual arquivo de split é usado (data/splits/splits_seed42.csv)
+n_folds: 5
+
+data:
+  patch_size: 128         # patch salvo no cache (precisa caber crop_size + 2*jitter)
+  crop_size: 70           # recorte que entra na rede (70 = escolha da dissertação)
+  img_size: 70            # redimensiona o recorte antes da rede (ex.: 224 para testar resolução)
+  jitter:                 # deslocamento máximo do núcleo em relação ao centro (px)
+    c1: 25                # C1: núcleo a >= 10 px da borda (regra da fronteira da dissertação)
+    default: 4            # demais tarefas: pequena variação
+
+model:
+  name: efficientnet_b0   # qualquer modelo do timm: convnext_tiny, resnet50, efficientnetv2_s...
+  pretrained: true
+
+train:
+  epochs: 40
+  batch_size: 64
+  lr: 3.0e-4
+  weight_decay: 1.0e-4
+  label_smoothing: 0.0
+  balance: sampler        # none | sampler (WeightedRandomSampler) | loss (pesos na CrossEntropy)
+  monitor: f1_macro       # métrica da validação usada para early stopping / melhor época
+  patience: 8
+  num_workers: 4
+  amp: true               # mixed precision (mais rápido na RTX)
+  limit: null             # inteiro = usa só N amostras (para testar o código rapidamente)

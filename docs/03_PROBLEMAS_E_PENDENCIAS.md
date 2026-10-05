@@ -6,9 +6,9 @@ Classificação: 🔴 crítico (invalida resultado/app) · 🟠 importante (enfr
 
 | # | Sev. | Problema | Onde | Efeito |
 |---|---|---|---|---|
-| A1 | 🔴 | **Rótulo de C2 invertido.** No treino `com_lesao=0`, `sem_lesao=1`; a interface faz `has_lesion = model2(x) > 0.45`, ou seja, marca como lesão o que o modelo acha que é **normal**. | `app/interface_hierarquica.py` (`process_crop`) | Células normais aparecem como lesão e vice-versa. Confirmado visualmente em `results/interface/resultado_hierarquico.png` (células escamosas superficiais/intermediárias normais em vermelho). |
-| A2 | 🔴 | **Rótulo de C3 invertido.** `alto_grau=0`, `baixo_grau=1`; a interface faz `is_high_grade = model3(x) > 0.5`. | idem | Baixo grau ↔ alto grau trocados. |
-| A3 | 🟠 | **Sem `sigmoid`.** O modelo devolve *logit*, mas é comparado com 0,5/0,45 como se fosse probabilidade. Limiar 0,5 em logit ≈ probabilidade 0,62. | idem (e `interface.py`) | Limiares descalibrados. |
+| A1 | ✅ | **[corrigido 05/10] Rótulo de C2 invertido.** No treino `com_lesao=0`, `sem_lesao=1`; a interface faz `has_lesion = model2(x) > 0.45`, ou seja, marca como lesão o que o modelo acha que é **normal**. | `app/interface_hierarquica.py` (`process_crop`) | Células normais aparecem como lesão e vice-versa. Confirmado visualmente em `results/interface/resultado_hierarquico.png` (células escamosas superficiais/intermediárias normais em vermelho). |
+| A2 | ✅ | **[corrigido 05/10] Rótulo de C3 invertido.** `alto_grau=0`, `baixo_grau=1`; a interface faz `is_high_grade = model3(x) > 0.5`. | idem | Baixo grau ↔ alto grau trocados. |
+| A3 | ✅ | **[corrigido 05/10] Sem `sigmoid`.** O modelo devolve *logit*, mas é comparado com 0,5/0,45 como se fosse probabilidade. Limiar 0,5 em logit ≈ probabilidade 0,62. | idem (e `interface.py`) | Limiares descalibrados. |
 | A4 | 🟠 | Votação com "≥ 1 voto" (OR) entre 3 grades. | idem | Aumenta falsos positivos; o ideal é média de probabilidades ou maioria. |
 | A5 | 🟠 | Varredura em grade cega 70×70; a caixa não fica centrada na célula, uma célula pode cair entre 4 janelas, e C1 foi treinado com recortes "célula" centrados (± tolerância). | idem | Detecção imprecisa / contagem duplicada. |
 | A6 | 🟠 | No `.exe` *onefile*, os `datas` são extraídos para `sys._MEIPASS`, mas o código procura `models/` ao lado do executável (`os.path.dirname(sys.executable)`). | interface + `.spec` | O `.exe` provavelmente não encontra os modelos se a pasta `models/` não estiver ao lado dele. |
@@ -31,9 +31,9 @@ Saída alta = `sem_lesao` (C2) e `baixo_grau` (C3); a interface trata saída alt
 
 | # | Sev. | Problema | Detalhe |
 |---|---|---|---|
-| B1 | 🔴 | **Vazamento por aumento offline.** `aumentar_scc.py`/`aumentar_ascus.py` gravam versões aumentadas (`aug_scc_*.png`) **na mesma pasta** antes do K-fold. Uma imagem de validação tem "gêmeas" aumentadas no treino. | Afeta C4, C5 e o flat. SCC: 839 de 1.000 recortes são sintéticos, gerados de só **161** reais. ASC-US: 744 de 1.350. Os números de SCC e ASC-US estão superestimados. |
-| B2 | 🔴 | **Split por recorte e não por imagem/lâmina.** Recortes da mesma imagem (mesmo campo, mesma coloração, células vizinhas que se sobrepõem no recorte) caem no treino e na validação. | Todos os classificadores. Precisa `StratifiedGroupKFold` com `groups = image_name`. |
-| B3 | 🔴 | **Classe positiva trocada nas métricas** (ver [02_RESULTADOS.md](02_RESULTADOS.md)). | A "revocação" reportada de C2 é da classe normal; a sensibilidade para lesão real é ~0,88 (não ~0,93). |
+| B1 | 🔴→✅ | **[resolvido no pipeline novo `cric/`] Vazamento por aumento offline.** `aumentar_scc.py`/`aumentar_ascus.py` gravam versões aumentadas (`aug_scc_*.png`) **na mesma pasta** antes do K-fold. Uma imagem de validação tem "gêmeas" aumentadas no treino. | Afeta C4, C5 e o flat. SCC: 839 de 1.000 recortes são sintéticos, gerados de só **161** reais. ASC-US: 744 de 1.350. Os números de SCC e ASC-US estão superestimados. |
+| B2 | 🔴→✅ | **[resolvido no pipeline novo] Split por recorte e não por imagem/lâmina.** Recortes da mesma imagem (mesmo campo, mesma coloração, células vizinhas que se sobrepõem no recorte) caem no treino e na validação. | Todos os classificadores. Precisa `StratifiedGroupKFold` com `groups = image_name`. |
+| B3 | 🔴→✅ | **[resolvido no pipeline novo] Classe positiva trocada nas métricas** (ver [02_RESULTADOS.md](02_RESULTADOS.md)). | A "revocação" reportada de C2 é da classe normal; a sensibilidade para lesão real é ~0,88 (não ~0,93). |
 | B4 | 🟠 | **Sem conjunto de teste independente.** Só validação cruzada, e hiperparâmetros/épocas foram mexidos olhando a validação. | Precisa de um test set separado (por imagem) tocado uma única vez. |
 | B5 | 🟠 | **Augmentação aleatória na validação** (C3, C4, C5 usam a mesma `transform` com flip/rotação para treino e validação). | Métricas ruidosas e não reprodutíveis. |
 | B6 | 🟠 | **Normalização inconsistente**: C1–C3 ImageNet; C4/C5 nenhuma; ConvNeXt `[0.5]`. | Dificulta comparação/integração. |
@@ -49,7 +49,7 @@ Saída alta = `sem_lesao` (C2) e `baixo_grau` (C3); a interface trata saída alt
 
 | # | Sev. | Item |
 |---|---|---|
-| C1 | 🔴 | **Código-fonte do gerador célula × não-célula perdido** (`main.py`, `config.py`, `preprocessor.py` só existem como `.pyc` de Python 3.14). A lógica foi reconstruída pelas strings do bytecode: grade `CROP_SIZE`, `is_cell_in_crop` com `TOLERANCE` em torno do centro. O valor de `TOLERANCE` e o critério de balanceamento 9.000/9.000 não são conhecidos → reescrever. |
+| C1 | 🔴→✅ | **[substituído por `cric/data.py` + jitter] Código-fonte do gerador célula × não-célula perdido** (`main.py`, `config.py`, `preprocessor.py` só existem como `.pyc` de Python 3.14). A lógica foi reconstruída pelas strings do bytecode: grade `CROP_SIZE`, `is_cell_in_crop` com `TOLERANCE` em torno do centro. O valor de `TOLERANCE` e o critério de balanceamento 9.000/9.000 não são conhecidos → reescrever. |
 | C2 | 🟠 | Git: `.gitignore` criado e commit inicial feito em 05/10/2026; falta repositório remoto (GitHub) e backup de dados/modelos. |
 | C3 | 🟠 | O notebook do C1 referencia `example_input` não definido e não tem `torch.save` → origem do `classificador1.pth` não é rastreável. |
 | C4 | 🟠 | Resultados dos notebooks ≠ CSV/TXT salvos (execuções diferentes). Não se sabe qual entrou no artigo. |

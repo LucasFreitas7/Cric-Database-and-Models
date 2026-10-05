@@ -1,5 +1,7 @@
 # 04 — Roadmap e melhorias possíveis
 
+> **Atualização 05/10/2026:** Fases 0 e 1 implementadas no pacote `cric/` (cache de patches, split por imagem, aumento online, sampler balanceado, métricas com classe clínica positiva, hierarquia hard/soft). O cronograma com datas está em [07_PLANO_DE_ACAO.md](07_PLANO_DE_ACAO.md); este arquivo fica como lista de ideias.
+
 Organizado em fases. As fases 0–2 são **necessárias** para o artigo ficar defensável; 3–5 são **evoluções** que podem virar contribuição nova.
 
 ## Fase 0 — Arrumar a casa (1–2 dias)

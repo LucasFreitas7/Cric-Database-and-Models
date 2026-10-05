@@ -27,3 +27,12 @@ docs/artigo/
 # Resto do código perdido do gerador C1 (manter como evidência)
 !legacy/pycache_gerador_c1_perdido/
 !legacy/pycache_gerador_c1_perdido/*.pyc
+
+# Cache de patches (~1,1 GB, recriável com scripts/build_cache.py)
+data/cache/
+
+# Saídas de experimentos: versiona só os relatórios
+runs/**
+!runs/*/
+!runs/*/report.md
+!runs/*/report.tex
