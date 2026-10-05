@@ -1,0 +1,16 @@
+# PyTorch com CUDA: instalar antes, separadamente:
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128
+torch>=2.5
+torchvision>=0.20
+timm>=1.0
+numpy
+pandas
+scikit-learn
+matplotlib
+seaborn
+pillow
+opencv-python
+tqdm
+jupyter
+ipykernel
+pyinstaller>=6.0

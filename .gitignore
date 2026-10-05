@@ -1,0 +1,29 @@
+# Ambiente
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Pastas antigas (pré-reestruturação) — podem ser apagadas
+/src/
+/build/
+
+# Build do executável (~2,5 GB)
+app/build/
+app/dist/
+app/resultado_hierarquico.png
+
+# Dados grandes — ver data/README.md
+data/raw/images/
+data/crops/
+
+# Pesos treinados — ver models/README.md
+models/*.pth
+*.pt
+
+# Dissertação (repositório próprio, sincronizado com o Overleaf)
+docs/artigo/
+
+# Resto do código perdido do gerador C1 (manter como evidência)
+!legacy/pycache_gerador_c1_perdido/
+!legacy/pycache_gerador_c1_perdido/*.pyc

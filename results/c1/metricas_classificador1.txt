@@ -1,0 +1,6 @@
+Relatório de Classificação:
+Acurácia      : 0.9428
+Precisão      : 0.9576
+Revocação     : 0.9286
+Especificidade: 0.9574
+F1-Score      : 0.9429
